@@ -50,9 +50,13 @@
     "devDependencies": {
         "@types/event-stream": "^3.3.34",
         "@types/fs-extra": "^9.0.1",
-        "@types/iobroker": "^3.0.12",
+        "@types/iobroker": "^3.2.3",
+        "@types/jsonwebtoken": "^8.5.0",
+        "@types/mime": "^2.0.3",
         "@types/mocha": "^8.0.3",
         "@types/node": "^14.6.4",
+        "@types/readline-sync": "^1.4.3",
+        "@types/request": "^2.48.5",
         "@types/semver": "^7.3.3",
         "@types/yargs": "^15.0.5",
         "chai": "^4.2.0",
@@ -111,7 +115,8 @@
         "test": "node node_modules/mocha/bin/mocha test --exit",
         "test-redis-socket": "node node_modules/mocha/bin/mocha test/redis-socket/ --exit",
         "test-redis-sentinel": "node node_modules/mocha/bin/mocha test/redis-sentinel/ --exit",
-        "coverage": "node node_modules/istanbul/lib/cli.js cover --config istanbul.yml node_modules/mocha/bin/_mocha ./test -- --ui bdd -R spec"
+        "coverage": "node node_modules/istanbul/lib/cli.js cover --config istanbul.yml node_modules/mocha/bin/_mocha ./test -- --ui bdd -R spec",
+        "lint": "eslint *.js lib"
     },
     "main": "main.js",
     "license": "MIT"

@@ -42,7 +42,9 @@ if (os.platform() === 'win32') {
 
 let title = tools.appName + '.js-controller';
 
+/** @type {ioBroker.ObjectsDBConstructor} */
 let Objects;
+/** @type {ioBroker.StatesDBConstructor} */
 let States;
 let decache;
 
@@ -71,7 +73,9 @@ const procs                 = {};
 const hostAdapter           = {};
 const subscribe             = {};
 const stopTimeouts          = {};
+/** @type {ioBroker.StatesDB} */
 let states                  = null;
+/** @type {ioBroker.ObjectsDB} */
 let objects                 = null;
 let storeTimer              = null;
 let isStopping              = null;
@@ -983,10 +987,14 @@ function collectDiagInfo(type, callback) {
 
                     if (!_err && doc && doc.rows.length) {
                         doc.rows.sort((a, b) => {
+                            const aVersion = (a && a.value && a.value.common) ? a.value.common.installedVersion : '0.0.0';
+                            const bVersion = (b && b.value && b.value.common) ? b.value.common.installedVersion : '0.0.0';
                             try {
-                                return semver.lt((a && a.value && a.value.common) ? a.value.common.installedVersion : '0.0.0', (b && b.value && b.value.common) ? b.value.common.installedVersion : '0.0.0');
+                                return semver.compare(aVersion, bVersion);
                             } catch (e) {
-                                logger.error(hostLogPrefix + ' Invalid versions: ' + ((a && a.value && a.value.common) ? a.value.common.installedVersion : '0.0.0') + '[' + ((a && a.value && a.value.common) ? a.value.common.name : 'unknown') + '] or ' + ((b && b.value && b.value.common) ? b.value.common.installedVersion : '0.0.0') + '[' + ((b && b.value && b.value.common) ? b.value.common.name : 'unknown') + ']');
+                                const aName = ((a && a.value && a.value.common) ? a.value.common.name : 'unknown');
+                                const bName = ((b && b.value && b.value.common) ? b.value.common.name : 'unknown');
+                                logger.error(`${hostLogPrefix} Invalid versions: ${aVersion}[${aName}] or ${bVersion}[${bName}]`);
                                 return 0;
                             }
                         });
@@ -1228,7 +1236,9 @@ function setMeta() {
         }
     });
 
+    /** @type {ioBroker.SettableObject[]} */
     const tasks = [];
+    /** @type {ioBroker.SettableObject} */
     let obj;
 
     if (!compactGroupController) {
@@ -1635,8 +1645,8 @@ function setMeta() {
                     if (fs.existsSync(VENDOR_BOOTSTRAP_FILE)) {
                         logger && logger.info(hostLogPrefix + ' Detected vendor file: ' + fs.existsSync(VENDOR_BOOTSTRAP_FILE));
                         try {
-                            let startScript = fs.readFileSync(VENDOR_BOOTSTRAP_FILE).toString('utf-8');
-                            startScript = JSON.parse(startScript);
+                            const startScriptContent = fs.readFileSync(VENDOR_BOOTSTRAP_FILE).toString('utf-8');
+                            const startScript = JSON.parse(startScriptContent);
 
                             if (startScript.password) {
                                 const Vendor = require('./lib/setup/setupVendor');
@@ -1730,7 +1740,7 @@ function getVersionFromHost(hostId, callback) {
 /**
  Helper function that serialize deletion of states
  @param {object} list array with states
- @param {function} cb optional callback
+ @param {function} [cb] optional callback
  */
 function _deleteAllZipPackages(list, cb) {
     if (!list || !list.length) {
@@ -1745,7 +1755,7 @@ function _deleteAllZipPackages(list, cb) {
  This function deletes all ZIP packages that were not downloaded.
  ZIP Package is temporary file, that should be deleted straight after it downloaded and if it still exists, so clear it
 
- @param {function} cb optional callback
+ @param {() => void} [cb] optional callback
  */
 function deleteAllZipPackages(cb) {
     states.getKeys(hostObjectPrefix + '.zip.*',
@@ -2112,7 +2122,7 @@ function processMessage(msg) {
                         .on('end', () => {  // done
                             const lines = text.split('\n');
                             lines.shift();
-                            lines.push(stats.size);
+                            lines.push(stats.size.toString());
                             sendTo(msg.from, msg.command, lines, msg.callback);
                         })
                         .on('error', () => // done
@@ -2312,6 +2322,7 @@ function processMessage(msg) {
             }
             break;
         }
+
         case 'getInterfaces':
             if (msg.callback && msg.from) {
                 sendTo(msg.from, msg.command, {result: os.networkInterfaces()}, msg.callback);
@@ -2687,8 +2698,9 @@ function checkVersions(id, deps, globalDeps) {
             const globInstances = {};
             if (res && res.rows) {
                 res.rows.forEach(item => {
-                    if (!item.value._id) return;
-                    globInstances[item.value._id] = item.value
+                    if (item.value._id) {
+                        globInstances[item.value._id] = item.value;
+                    }
                 });
                 Object.keys(globInstances).forEach(id => {
                     if (globInstances[id] && globInstances[id].common && globInstances[id].common.host === hostname) {
